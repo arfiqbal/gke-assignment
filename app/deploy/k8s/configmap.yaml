@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: build-info-config
+  namespace: build-info
+data:
+  PORT: "8443"
+  TLS: "true"                          # "true" -> HTTPS, "false" -> plain HTTP
+  TLS_CERT_FILE: /etc/tls/tls.crt      # paths inside the container (Secret volume mount)
+  TLS_KEY_FILE: /etc/tls/tls.key
+  DRAIN_DELAY_SECONDS: "5"
+  SHUTDOWN_TIMEOUT_SECONDS: "10"
+  LOG_LEVEL: INFO

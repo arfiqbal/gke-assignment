@@ -1,0 +1,10 @@
+project_id             = "stable-electron-506610-c6"
+region                 = "asia-south1"
+cluster_name           = "autopilot-asm"
+create_nat             = true
+neg_name               = "ingress-443"
+neg_zones              = ["asia-south1-b", "asia-south1-c"]
+proxy_only_subnet_cidr = "192.168.0.0/24"
+subnetwork_name        = "default"
+enable_lb              = false
+gateway_backend_port   = 443

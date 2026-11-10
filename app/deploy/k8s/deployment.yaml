@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: build-info
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: build-info
+  namespace: build-info
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: build-info }
+  template:
+    metadata:
+      labels: { app: build-info }
+      annotations:
+        # bump/replace on config change so pods restart (or use Reloader / kustomize configMapGenerator hash)
+        config-version: "1"
+    spec:
+      # preStop(5) + DRAIN_DELAY(5) + SHUTDOWN_TIMEOUT(10) = 20s < 30s
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: build-info }
+      containers:
+        - name: app
+          image: REGION-docker.pkg.dev/PROJECT/REPO/build-info:GIT_SHA   # replaced by CI
+          ports:
+            - name: https
+              containerPort: 8443
+          envFrom:
+            - configMapRef:
+                name: build-info-config
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/tls
+              readOnly: true
+            - name: tmp                    # writable scratch (HOME=/tmp) for gsutil state; root fs is read-only
+              mountPath: /tmp
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          # NOTE: probe scheme must match the TLS setting (HTTPS when TLS=true, HTTP when false).
+          # Kubelet does not verify the certificate for HTTPS probes.
+          startupProbe:
+            httpGet: { path: /healthz, port: https, scheme: HTTPS }
+            periodSeconds: 2
+            failureThreshold: 15
+          livenessProbe:
+            httpGet: { path: /healthz, port: https, scheme: HTTPS }
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /readyz, port: https, scheme: HTTPS }
+            periodSeconds: 5
+            failureThreshold: 1
+          lifecycle:
+            preStop:
+              exec:
+                command: ["python", "-c", "import time; time.sleep(5)"]
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: tls
+          secret:
+            secretName: build-info-tls     # kubernetes.io/tls secret (tls.crt / tls.key)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: build-info
+  namespace: build-info
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports": {"443": {"name": "build-info-neg"}}}'
+spec:
+  type: ClusterIP
+  selector: { app: build-info }
+  ports:
+    - { name: https, port: 443, targetPort: https }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: build-info
+  namespace: build-info
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels: { app: build-info }
+ 
+Claude finished the response

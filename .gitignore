@@ -1,0 +1,25 @@
+# Core Terraform / OpenTofu components
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Exclude all variable files as they may contain sensitive data/secrets
+
+*.tfvars.json
+
+# Exclude override files (used for local-only modifications)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore generated plan outputs (optional, change if you use custom names)
+*tfplan*
