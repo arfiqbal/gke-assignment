@@ -25,4 +25,4 @@ terraform.rc
 
 # Ignore generated plan outputs (optional, change if you use custom names)
 *tfplan*
-*cert*
+**/cert/
