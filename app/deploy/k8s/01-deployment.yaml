@@ -38,7 +38,7 @@ spec:
             matchLabels: { app: build-info }
       containers:
         - name: app
-          image: asia-south1-docker.pkg.dev/stable-electron-506610-c6/data-engg/build-info:e2d0f05
+          image: asia-south1-docker.pkg.dev/stable-electron-506610-c6/data-engg/build-info:33ff3a1
           ports:
             - name: http
               containerPort: 8080
