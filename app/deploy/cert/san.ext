@@ -1,4 +1,0 @@
-subjectAltName = DNS:my-app.internal
-basicConstraints = CA:FALSE
-keyUsage = digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth
