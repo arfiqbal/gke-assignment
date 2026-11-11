@@ -35,4 +35,4 @@ resource "google_compute_firewall" "allow_iap_ssh" {
 # gcloud compute ssh iap-bastion \
 #     --zone=asia-south1-a \
 #     --tunnel-through-iap \
-#     -- -L 8443:10.160.0.4:443 -N
+#     -- -L 8443:10.160.0.15:443 -N

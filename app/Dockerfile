@@ -29,7 +29,8 @@ RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin appuser
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=gsutil /opt/gsutil /opt/gsutil
-RUN ln -s /opt/gsutil/bin/gsutil /usr/local/bin/gsutil
+RUN ln -s /opt/gsutil/bin/gsutil /usr/local/bin/gsutil && \
+    printf '[GoogleCompute]\nservice_account = default\n\n[GSUtil]\nstate_dir = /tmp/.gsutil\n' > /etc/boto.cfg
 COPY src/ .
 
 # Build metadata is written to a file (not ENV) so a ConfigMap/env var can override it at runtime.

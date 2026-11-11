@@ -139,3 +139,22 @@ variable "ci_roles" {
   default     = []
 }
 
+# bucket
+variable "bucket_name" {
+  type    = string
+  default = "demo-bucket-7124"
+}
+variable "k8s_namespace" {
+  type    = string
+  default = "demo-app"
+}
+
+variable "ksa_name" {
+  type    = string
+  default = "build-info"
+}
+
+variable "gsa_name" {
+  type    = string
+  default = "build-info-gsa"
+}

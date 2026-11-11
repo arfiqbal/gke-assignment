@@ -1,13 +1,15 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: build-info
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: demo-app
+#   labels:
+#     istio-injection: enabled
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: build-info
-  namespace: build-info
+  namespace: demo-app
 spec:
   replicas: 3
   strategy:
@@ -22,8 +24,8 @@ spec:
         # bump/replace on config change so pods restart (or use Reloader / kustomize configMapGenerator hash)
         config-version: "1"
     spec:
-      # preStop(5) + DRAIN_DELAY(5) + SHUTDOWN_TIMEOUT(10) = 20s < 30s
       terminationGracePeriodSeconds: 30
+      serviceAccountName: build-info
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -36,8 +38,10 @@ spec:
             matchLabels: { app: build-info }
       containers:
         - name: app
-          image: REGION-docker.pkg.dev/PROJECT/REPO/build-info:GIT_SHA   # replaced by CI
+          image: asia-south1-docker.pkg.dev/stable-electron-506610-c6/data-engg/build-info:e2d0f05
           ports:
+            - name: http
+              containerPort: 8080
             - name: https
               containerPort: 8443
           envFrom:
@@ -47,61 +51,55 @@ spec:
             - name: tls
               mountPath: /etc/tls
               readOnly: true
-            - name: tmp                    # writable scratch (HOME=/tmp) for gsutil state; root fs is read-only
+            - name: tmp # writable scratch (HOME=/tmp) for gsutil state; root fs is read-only
               mountPath: /tmp
           resources:
             requests: { cpu: 100m, memory: 128Mi }
-            limits:   { memory: 256Mi }
+            limits: { memory: 256Mi }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
           # NOTE: probe scheme must match the TLS setting (HTTPS when TLS=true, HTTP when false).
           # Kubelet does not verify the certificate for HTTPS probes.
-          startupProbe:
-            httpGet: { path: /healthz, port: https, scheme: HTTPS }
-            periodSeconds: 2
-            failureThreshold: 15
           livenessProbe:
-            httpGet: { path: /healthz, port: https, scheme: HTTPS }
+            httpGet: { path: /healthz, port: 8443, scheme: HTTPS }
             periodSeconds: 10
             failureThreshold: 3
           readinessProbe:
-            httpGet: { path: /readyz, port: https, scheme: HTTPS }
+            httpGet: { path: /readyz, port: 8443, scheme: HTTPS }
             periodSeconds: 5
             failureThreshold: 1
-          lifecycle:
-            preStop:
-              exec:
-                command: ["python", "-c", "import time; time.sleep(5)"]
       volumes:
         - name: tmp
           emptyDir: {}
         - name: tls
           secret:
-            secretName: build-info-tls     # kubernetes.io/tls secret (tls.crt / tls.key)
+            secretName: build-info-tls
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: build-info
-  namespace: build-info
-  annotations:
-    cloud.google.com/neg: '{"exposed_ports": {"443": {"name": "build-info-neg"}}}'
+  namespace: demo-app
 spec:
   type: ClusterIP
-  selector: { app: build-info }
-  ports:
-    - { name: https, port: 443, targetPort: https }
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: build-info
-  namespace: build-info
-spec:
-  minAvailable: 2
   selector:
-    matchLabels: { app: build-info }
- 
-Claude finished the response
+    app: build-info
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: https
+      port: 443
+      targetPort: https
+# ---
+# apiVersion: policy/v1
+# kind: PodDisruptionBudget
+# metadata:
+#   name: build-info
+#   namespace: demo-app
+# spec:
+#   minAvailable: 2
+#   selector:
+#     matchLabels: { app: build-info }
