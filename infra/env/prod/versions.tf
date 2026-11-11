@@ -8,11 +8,6 @@ terraform {
     }
   }
 
-  # Recommended: keep state in a GCS bucket (create the bucket once, outside this config).
-  # backend "gcs" {
-  #   bucket = "YOUR-TFSTATE-BUCKET"
-  #   prefix = "github-ci"
-  # }
 }
 
 provider "google" {

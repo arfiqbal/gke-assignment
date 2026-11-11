@@ -33,14 +33,14 @@ resource "google_artifact_registry_repository" "images" {
 
 # ---------- IAM on the repository (least privilege, scoped to this repo only) ----------
 
-# GitHub Actions can push images
-resource "google_artifact_registry_repository_iam_member" "ci_writer" {
-  project    = var.project_id
-  location   = google_artifact_registry_repository.images.location
-  repository = google_artifact_registry_repository.images.name
-  role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${google_service_account.github_ci.email}"
-}
+# # GitHub Actions can push images
+# resource "google_artifact_registry_repository_iam_member" "ci_writer" {
+#   project    = var.project_id
+#   location   = google_artifact_registry_repository.images.location
+#   repository = google_artifact_registry_repository.images.name
+#   role       = "roles/artifactregistry.writer"
+#   member     = "serviceAccount:${google_service_account.github_ci.email}"
+# }
 
 # GKE nodes can pull images (only if a node service account is provided)
 resource "google_artifact_registry_repository_iam_member" "gke_reader" {

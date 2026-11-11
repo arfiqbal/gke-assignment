@@ -1,14 +1,3 @@
-resource "google_project_service" "apis" {
-  for_each = toset([
-    "container.googleapis.com", "gkehub.googleapis.com",
-    "mesh.googleapis.com", "meshconfig.googleapis.com",
-    "meshca.googleapis.com", "compute.googleapis.com",
-    "dns.googleapis.com", "cloudresourcemanager.googleapis.com",
-  ])
-  project            = var.project_id
-  service            = each.key
-  disable_on_destroy = false
-}
 
 resource "google_service_account" "gke_sa" {
   account_id = "my-gke-sa"
@@ -26,11 +15,11 @@ resource "google_container_cluster" "this" {
   enable_autopilot    = true
   deletion_protection = var.deletion_protection
 
-  # cluster_autoscaling {
-  #   auto_provisioning_defaults {
-  #     service_account = google_service_account.gke_sa.email
-  #   }
-  # }
+  cluster_autoscaling {
+    auto_provisioning_defaults {
+      service_account = google_service_account.gke_sa.email
+    }
+  }
 
 
   network    = data.google_compute_network.vpc.id

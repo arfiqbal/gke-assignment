@@ -1,5 +1,3 @@
-# ---------- Workload Identity Federation for GitHub Actions (keyless) ----------
-
 resource "google_iam_workload_identity_pool" "github" {
   project                   = var.project_id
   workload_identity_pool_id = var.wif_pool_id
@@ -24,7 +22,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 
   # Only tokens issued for THIS repository are accepted at all.
-  attribute_condition = "assertion.repository == '${var.github_repository}'"
+  attribute_condition = local.attribute_condition
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
@@ -45,5 +43,15 @@ resource "google_service_account" "github_ci" {
 resource "google_service_account_iam_member" "github_wif" {
   service_account_id = google_service_account.github_ci.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repository}"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/${local.principal_suffix}"
 }
+
+# What the CI service account may actually do (otherwise it can authenticate but do nothing)
+resource "google_project_iam_member" "github_ci" {
+  for_each = toset(var.ci_roles)
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.github_ci.email}"
+}
+
