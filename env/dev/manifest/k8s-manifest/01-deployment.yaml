@@ -1,9 +1,9 @@
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: demo-app
-#   labels:
-#     istio-injection: enabled
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-app
+  labels:
+    istio-injection: enabled
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -60,8 +60,6 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
-          # NOTE: probe scheme must match the TLS setting (HTTPS when TLS=true, HTTP when false).
-          # Kubelet does not verify the certificate for HTTPS probes.
           livenessProbe:
             httpGet: { path: /healthz, port: 8443, scheme: HTTPS }
             periodSeconds: 10
@@ -93,13 +91,11 @@ spec:
     - name: https
       port: 443
       targetPort: https
-# ---
-# apiVersion: policy/v1
-# kind: PodDisruptionBudget
-# metadata:
-#   name: build-info
-#   namespace: demo-app
-# spec:
-#   minAvailable: 2
-#   selector:
-#     matchLabels: { app: build-info }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    iam.gke.io/gcp-service-account: build-info-gsa@stable-electron-506610-c6.iam.gserviceaccount.com
+  name: build-info
+  namespace: demo-app

@@ -26,3 +26,6 @@ terraform.rc
 # Ignore generated plan outputs (optional, change if you use custom names)
 *tfplan*
 **/cert/
+**/.venv
+app/src/__pycache__/
+**__pycache__
